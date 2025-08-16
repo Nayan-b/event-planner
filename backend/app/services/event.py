@@ -7,7 +7,8 @@ from ..schemas.event import EventCreate, EventUpdate, EventInDB
 
 async def create_event(event: EventCreate, user_id: str):
     db = next(get_db())
-    event_data = event.dict()
+    # Use JSON-friendly dump to serialize datetime fields
+    event_data = event.model_dump(mode="json")
     event_data["created_by"] = user_id
     result = db.table("events").insert(event_data).execute()
     return result.data[0] if result.data else None
@@ -33,7 +34,7 @@ async def get_events(
 
 async def get_event(event_id: str) -> Optional[EventInDB]:
     db = next(get_db())
-    result = db.table("events").select("*").eq("id", event_id).single().execute()
+    result = db.table("events").select("*").eq("id", event_id).maybe_single().execute()
     return result.data if hasattr(result, "data") else None
 
 
@@ -50,7 +51,8 @@ async def update_event(
             status_code=403, detail="Not authorized to update this event"
         )
 
-    update_data = event.dict(exclude_unset=True)
+    # JSON-friendly dump for partial updates, to serialize datetime fields
+    update_data = event.model_dump(exclude_unset=True, mode="json")
     if not update_data:
         return existing
 

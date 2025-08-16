@@ -11,16 +11,20 @@ from ..schemas.user import TokenData, UserInDB
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
+
 async def get_user(email: str):
     db = next(get_db())
-    result = db.table("users").select("*").eq("email", email).single().execute()
-    return result.data if hasattr(result, 'data') else None
+    result = db.table("users").select("*").eq("email", email).maybe_single().execute()
+    return result.data if hasattr(result, "data") else None
+
 
 async def authenticate_user(email: str, password: str):
     user = await get_user(email)
@@ -30,6 +34,7 @@ async def authenticate_user(email: str, password: str):
         return False
     return user
 
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
@@ -37,10 +42,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SUPABASE_JWT_SECRET, algorithm="HS256"
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SUPABASE_JWT_SECRET, algorithm="HS256")
     return encoded_jwt
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
@@ -49,20 +53,19 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(
-            token, settings.SUPABASE_JWT_SECRET, algorithms=["HS256"]
-        )
+        payload = jwt.decode(token, settings.SUPABASE_JWT_SECRET, algorithms=["HS256"])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
         token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    
+
     user = await get_user(email=token_data.email)
     if user is None:
         raise credentials_exception
     return user
+
 
 async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
     if not current_user.get("is_active", True):

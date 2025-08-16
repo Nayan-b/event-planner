@@ -6,12 +6,14 @@ from ..services.auth import get_current_active_user
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+
 @router.post("/", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
 async def create_event(
     event: EventCreate,
     current_user: dict = Depends(get_current_active_user),
 ):
     return await event_service.create_event(event, current_user["id"])
+
 
 @router.get("/", response_model=List[EventResponse])
 async def list_events(
@@ -21,11 +23,9 @@ async def list_events(
     current_user: dict = Depends(get_current_active_user),
 ):
     return await event_service.get_events(
-        skip=skip,
-        limit=limit,
-        is_public=is_public,
-        user_id=current_user["id"]
+        skip=skip, limit=limit, is_public=is_public, user_id=current_user["id"]
     )
+
 
 @router.get("/{event_id}", response_model=EventResponse)
 async def get_event(
@@ -39,6 +39,7 @@ async def get_event(
         raise HTTPException(status_code=403, detail="Not authorized to view this event")
     return event
 
+
 @router.put("/{event_id}", response_model=EventResponse)
 async def update_event(
     event_id: str,
@@ -46,6 +47,7 @@ async def update_event(
     current_user: dict = Depends(get_current_active_user),
 ):
     return await event_service.update_event(event_id, event, current_user["id"])
+
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_event(

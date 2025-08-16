@@ -23,12 +23,12 @@ async def create_user(user: UserCreate):
 
 async def get_user(user_id: str):
     db = next(get_db())
-    result = db.table("users").select("*").eq("id", user_id).single().execute()
+    result = db.table("users").select("*").eq("id", user_id).maybe_single().execute()
     return result.data if hasattr(result, 'data') else None
 
 async def get_user_by_email(email: str):
     db = next(get_db())
-    result = db.table("users").select("*").eq("email", email).single().execute()
+    result = db.table("users").select("*").eq("email", email).maybe_single().execute()
     return result.data if hasattr(result, 'data') else None
 
 async def update_user(
