@@ -1,50 +1,53 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, Users, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { useToast } from "@/components/ui/use-toast";
 
-// Mock data - replace with your actual data fetching
-const mockEvents = [
-  {
-    id: 1,
-    title: "Tech Conference 2023",
-    description: "Annual technology conference featuring industry leaders and innovators.",
-    date: "2023-12-15",
-    time: "09:00",
-    location: "Convention Center, San Francisco",
-    category: "Technology",
-    capacity: 500,
-    registered: 342,
-    image: "/images/tech-conference.jpg"
-  },
-  {
-    id: 2,
-    title: "Startup Pitch Night",
-    description: "Witness the most promising startups pitch their ideas to investors.",
-    date: "2023-11-30",
-    time: "18:30",
-    location: "Innovation Hub, New York",
-    category: "Business",
-    capacity: 200,
-    registered: 187,
-    image: "/images/startup-pitch.jpg"
-  },
-  {
-    id: 3,
-    title: "Blockchain Workshop",
-    description: "Hands-on workshop on building decentralized applications.",
-    date: "2023-12-05",
-    time: "14:00",
-    location: "Tech Campus, Austin",
-    category: "Blockchain",
-    capacity: 50,
-    registered: 42,
-    image: "/images/blockchain-workshop.jpg"
-  },
-];
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+  capacity: number;
+  registered: number;
+  image?: string;
+}
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events');
+        if (!response.ok) throw new Error('Failed to fetch events');
+        const data = await response.json();
+        setEvents(data);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load events. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [toast]);
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
@@ -59,14 +62,33 @@ export default function EventsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockEvents.map((event) => (
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : events.length === 0 ? (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium">No events found</h3>
+          <p className="text-muted-foreground mt-2">
+            There are no upcoming events. Be the first to create one!
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {events.map((event) => {
           <Card key={event.id} className="flex flex-col h-full hover:shadow-lg transition-shadow">
             <div className="h-48 bg-gray-200 rounded-t-lg overflow-hidden">
-              {/* Replace with actual image */}
-              <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white">
-                <span className="text-xl font-semibold">{event.title}</span>
-              </div>
+              {event.image ? (
+                <img 
+                  src={event.image} 
+                  alt={event.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white">
+                  <span className="text-xl font-semibold text-center px-4">{event.title}</span>
+                </div>
+              )}
             </div>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -82,12 +104,8 @@ export default function EventsPage() {
             <CardContent className="flex-1">
               <div className="space-y-3">
                 <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  <span>{new Date(event.date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}</span>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <span>{format(new Date(event.date), 'MMMM d, yyyy')}</span>
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Clock className="mr-2 h-4 w-4" />
@@ -104,16 +122,17 @@ export default function EventsPage() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="w-full">
                 <Link href={`/events/${event.id}`}>View Details</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="w-full">
                 <Link href={`/events/${event.id}/register`}>Register</Link>
               </Button>
             </CardFooter>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
