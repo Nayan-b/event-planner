@@ -2,27 +2,36 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
-export function LoginForm() {
+type LoginFormProps = {
+  onSubmit: (email: string, password: string) => Promise<void>;
+};
+
+export function LoginForm({ onSubmit }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    
+    if (!email || !password) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+      return;
+    }
 
+    setIsLoading(true);
     try {
-      await signIn(email, password);
-      router.push('/dashboard');
-      router.refresh();
+      await onSubmit(email, password);
     } catch (error: any) {
       toast({
         title: 'Error',

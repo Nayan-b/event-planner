@@ -14,6 +14,7 @@ A full-stack event planning application built with modern web technologies. This
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe JavaScript
 - **Tailwind CSS** - Utility-first CSS framework
@@ -21,6 +22,7 @@ A full-stack event planning application built with modern web technologies. This
 - **Supabase** - Backend as a Service for authentication and database
 
 ### Backend
+
 - **FastAPI** - Modern Python web framework
 - **PostgreSQL** - Reliable relational database
 - **SQLAlchemy** - SQL toolkit and ORM
@@ -61,23 +63,27 @@ event-planner/
 ### Backend Setup
 
 1. **Navigate to the backend directory:**
+
    ```bash
    cd backend
    ```
 
 2. **Create a virtual environment:**
+
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. **Install dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Set up environment variables:**
    Create a `.env` file in the backend directory:
+
    ```env
    DATABASE_URL=postgresql://username:password@localhost:5432/event_planner
    SECRET_KEY=your-secret-key-here
@@ -86,6 +92,7 @@ event-planner/
    ```
 
 5. **Run database migrations:**
+
    ```bash
    alembic upgrade head
    ```
@@ -100,17 +107,20 @@ The backend will be available at `http://localhost:8000`
 ### Frontend Setup
 
 1. **Navigate to the frontend directory:**
+
    ```bash
    cd frontend
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables:**
    Create a `.env.local` file in the frontend directory:
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
@@ -127,6 +137,7 @@ The frontend will be available at `http://localhost:3000`
 ## 📖 API Documentation
 
 Once the backend is running, you can access the interactive API documentation at:
+
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 
@@ -141,6 +152,7 @@ The application uses the following main tables:
 ## 🔧 Development
 
 ### Running Tests
+
 ```bash
 # Backend tests
 cd backend
@@ -152,6 +164,7 @@ npm test
 ```
 
 ### Code Formatting
+
 ```bash
 # Backend
 cd backend
@@ -167,14 +180,18 @@ npm run format
 ## 🚀 Deployment
 
 ### Backend Deployment
+
 The backend can be deployed to various platforms:
+
 - **Railway**: Easy deployment with PostgreSQL
 - **Heroku**: Traditional platform with add-ons
 - **DigitalOcean**: App Platform or Droplets
 - **AWS**: ECS, Lambda, or EC2
 
 ### Frontend Deployment
+
 The frontend can be deployed to:
+
 - **Vercel**: Optimized for Next.js
 - **Netlify**: Static site hosting
 - **AWS Amplify**: Full-stack deployment
@@ -194,6 +211,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 If you encounter any issues or have questions:
+
 1. Check the [Issues](https://github.com/Nayan-b/event-planner-private/issues) page
 2. Create a new issue with detailed information
 3. Contact the maintainers

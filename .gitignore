@@ -30,6 +30,24 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+
+# Python optimization
+*.opt-1.py
+*.opt-2.py
+
+# Python profiling
+*.prof
+
+# Python coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
 # Virtual environments
 venv/
 env/
@@ -154,6 +172,25 @@ Pipfile.lock
 
 # PEP 582
 __pypackages__/
+
+# Python development
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.cache
+
+# Python linting and formatting
+.flake8
+.pylintrc
+pyproject.toml.bak
+setup.cfg.bak
 
 # Celery stuff
 celerybeat-schedule

@@ -1,24 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signUp } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
-export function RegisterForm() {
+type RegisterFormProps = {
+  onSubmit: (email: string, password: string, fullName: string) => Promise<void>;
+};
+
+export function RegisterForm({ onSubmit }: RegisterFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!email || !password || !fullName) {
+      toast({
+        title: 'Error',
+        description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (password.length < 6) {
       toast({
         title: 'Error',
@@ -31,14 +41,7 @@ export function RegisterForm() {
     setIsLoading(true);
 
     try {
-      await signUp(email, password, { full_name: fullName });
-      
-      toast({
-        title: 'Success!',
-        description: 'Account created. Please check your email to verify your account.',
-      });
-      
-      router.push('/login');
+      await onSubmit(email, password, fullName);
     } catch (error: any) {
       toast({
         title: 'Error',
