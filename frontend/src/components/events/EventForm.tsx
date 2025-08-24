@@ -1,19 +1,23 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useToast } from '@/components/ui/use-toast';
-import { EventCreate, EventUpdate } from '@/types/events';
+import { useState } from "react";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useToast } from "@/components/ui/use-toast";
+import { EventCreate, EventUpdate } from "@/types/events";
 
 interface EventFormProps {
   initialData?: EventUpdate & { id?: string };
@@ -26,82 +30,96 @@ export function EventForm({
   initialData,
   onSubmit,
   isSubmitting = false,
-  submitLabel = 'Create Event',
+  submitLabel = "Create Event",
 }: EventFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const [formData, setFormData] = useState<EventCreate | EventUpdate>(
     initialData || {
-      title: '',
-      description: '',
-      location: '',
+      title: "",
+      description: "",
+      location: "",
       start_time: new Date(),
       end_time: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours later
       is_public: true,
       max_attendees: undefined,
-      image_url: '',
+      image_url: "",
     }
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [datePickerOpen, setDatePickerOpen] = useState<'start' | 'end' | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState<"start" | "end" | null>(
+    null
+  );
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = "Title is required";
     }
-    
+
     if (!formData.start_time) {
-      newErrors.start_time = 'Start time is required';
+      newErrors.start_time = "Start time is required";
     }
-    
+
     if (!formData.end_time) {
-      newErrors.end_time = 'End time is required';
-    } else if (formData.start_time && formData.end_time <= formData.start_time) {
-      newErrors.end_time = 'End time must be after start time';
+      newErrors.end_time = "End time is required";
+    } else if (
+      formData.start_time &&
+      formData.end_time <= formData.start_time
+    ) {
+      newErrors.end_time = "End time must be after start time";
     }
-    
+
     if (formData.max_attendees !== undefined && formData.max_attendees < 1) {
-      newErrors.max_attendees = 'Must be at least 1';
+      newErrors.max_attendees = "Must be at least 1";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
-    
+
     try {
       await onSubmit(formData);
       toast({
-        title: 'Success!',
-        description: initialData ? 'Event updated successfully' : 'Event created successfully',
+        title: "Success!",
+        description: initialData
+          ? "Event updated successfully"
+          : "Event created successfully",
       });
-      router.push(initialData ? `/events/${initialData.id}` : '/dashboard');
+      router.push(initialData ? `/events/${initialData.id}` : "/dashboard");
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to save event',
-        variant: 'destructive',
+        title: "Error",
+        description: error.message || "Failed to save event",
+        variant: "destructive",
       });
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'max_attendees' ? (value ? parseInt(value, 10) : undefined) : value,
+      [name]:
+        name === "max_attendees"
+          ? value
+            ? parseInt(value, 10)
+            : undefined
+          : value,
     }));
-    
+
     // Clear error when field is edited
     if (errors[name]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
@@ -109,23 +127,26 @@ export function EventForm({
     }
   };
 
-  const handleDateSelect = (date: Date | undefined, field: 'start_time' | 'end_time') => {
+  const handleDateSelect = (
+    date: Date | undefined,
+    field: "start_time" | "end_time"
+  ) => {
     if (!date) return;
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       [field]: date,
     }));
-    
+
     // If setting start time, update end time if it would be before start
-    if (field === 'start_time' && formData.end_time < date) {
+    if (field === "start_time" && formData.end_time < date) {
       const newEndTime = new Date(date.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         end_time: newEndTime,
       }));
     }
-    
+
     setDatePickerOpen(null);
   };
 
@@ -140,9 +161,11 @@ export function EventForm({
             value={formData.title}
             onChange={handleChange}
             placeholder="My Awesome Event"
-            className={errors.title ? 'border-red-500' : ''}
+            className={errors.title ? "border-red-500" : ""}
           />
-          {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
+          {errors.title && (
+            <p className="text-sm text-red-500 mt-1">{errors.title}</p>
+          )}
         </div>
 
         <div>
@@ -162,7 +185,7 @@ export function EventForm({
           <Input
             id="location"
             name="location"
-            value={formData.location || ''}
+            value={formData.location || ""}
             onChange={handleChange}
             placeholder="Where is the event taking place?"
           />
@@ -171,7 +194,10 @@ export function EventForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Start Time *</Label>
-            <Popover open={datePickerOpen === 'start'} onOpenChange={(open) => setDatePickerOpen(open ? 'start' : null)}>
+            <Popover
+              open={datePickerOpen === "start"}
+              onOpenChange={(open) => setDatePickerOpen(open ? "start" : null)}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -193,17 +219,22 @@ export function EventForm({
                 <Calendar
                   mode="single"
                   selected={new Date(formData.start_time)}
-                  onSelect={(date) => handleDateSelect(date, 'start_time')}
+                  onSelect={(date) => handleDateSelect(date, "start_time")}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
-            {errors.start_time && <p className="text-sm text-red-500 mt-1">{errors.start_time}</p>}
+            {errors.start_time && (
+              <p className="text-sm text-red-500 mt-1">{errors.start_time}</p>
+            )}
           </div>
 
           <div>
             <Label>End Time *</Label>
-            <Popover open={datePickerOpen === 'end'} onOpenChange={(open) => setDatePickerOpen(open ? 'end' : null)}>
+            <Popover
+              open={datePickerOpen === "end"}
+              onOpenChange={(open) => setDatePickerOpen(open ? "end" : null)}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -225,12 +256,14 @@ export function EventForm({
                 <Calendar
                   mode="single"
                   selected={new Date(formData.end_time)}
-                  onSelect={(date) => handleDateSelect(date, 'end_time')}
+                  onSelect={(date) => handleDateSelect(date, "end_time")}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
-            {errors.end_time && <p className="text-sm text-red-500 mt-1">{errors.end_time}</p>}
+            {errors.end_time && (
+              <p className="text-sm text-red-500 mt-1">{errors.end_time}</p>
+            )}
           </div>
         </div>
 
@@ -242,12 +275,16 @@ export function EventForm({
               name="max_attendees"
               type="number"
               min="1"
-              value={formData.max_attendees || ''}
+              value={formData.max_attendees || ""}
               onChange={handleChange}
               placeholder="Leave empty for unlimited"
-              className={errors.max_attendees ? 'border-red-500' : ''}
+              className={errors.max_attendees ? "border-red-500" : ""}
             />
-            {errors.max_attendees && <p className="text-sm text-red-500 mt-1">{errors.max_attendees}</p>}
+            {errors.max_attendees && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.max_attendees}
+              </p>
+            )}
           </div>
 
           <div>
@@ -256,7 +293,7 @@ export function EventForm({
               id="image_url"
               name="image_url"
               type="url"
-              value={formData.image_url || ''}
+              value={formData.image_url || ""}
               onChange={handleChange}
               placeholder="https://example.com/image.jpg"
             />
@@ -267,7 +304,9 @@ export function EventForm({
           <Switch
             id="is_public"
             checked={formData.is_public}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_public: checked }))}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({ ...prev, is_public: checked }))
+            }
           />
           <Label htmlFor="is_public">Make this event public</Label>
         </div>
@@ -283,7 +322,7 @@ export function EventForm({
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : submitLabel}
+          {isSubmitting ? "Saving..." : submitLabel}
         </Button>
       </div>
     </form>
