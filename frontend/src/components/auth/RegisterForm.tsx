@@ -42,10 +42,11 @@ export function RegisterForm({ onSubmit }: RegisterFormProps) {
 
     try {
       await onSubmit(email, password, fullName);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create account',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

@@ -33,11 +33,12 @@ export function Header({ user }: HeaderProps) {
     try {
       await signOut();
       window.location.href = "/login";
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign out';
       toast({
-        title: "Error",
-        description: error.message || "Failed to sign out",
-        variant: "destructive",
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
       });
     }
   };

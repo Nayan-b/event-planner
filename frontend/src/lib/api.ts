@@ -1,4 +1,4 @@
-import { EventCreate, EventUpdate, RSVPCreate, RSVPUpdate } from '@/types/events';
+import { EventCreate, EventUpdate } from '@/types/events';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -51,7 +51,7 @@ const api = {
 };
 
 // Helper functions
-async function fetchWithAuth(url: string, token: string, method: string = 'GET', body?: any) {
+async function fetchWithAuth<T = unknown>(url: string, token: string, method: string = 'GET', body?: T) {
   const options: RequestInit = {
     method,
     headers: {

@@ -116,7 +116,7 @@ export function EventCard({
                 size="sm"
                 onClick={() => onRSVP("not_going")}
               >
-                Can't Go
+                Can&apos;t Go
               </Button>
               <Button
                 variant={

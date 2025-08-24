@@ -18,12 +18,13 @@ export interface EventBase {
   image_url?: string;
 }
 
-export interface EventCreate extends Omit<EventBase, 'start_time' | 'end_time'> {
+export interface EventCreate
+  extends Omit<EventBase, "start_time" | "end_time"> {
   start_time: Date | string;
   end_time: Date | string;
 }
 
-export interface EventUpdate extends Partial<EventCreate> {}
+export type EventUpdate = Partial<EventCreate>;
 
 export interface Event extends EventBase {
   id: string;
@@ -36,16 +37,16 @@ export interface Event extends EventBase {
 }
 
 export interface RSVPBase {
-  status: 'going' | 'not_going' | 'maybe';
+  status: "going" | "not_going" | "maybe";
 }
 
 export interface RSVPCreate {
   event_id: string;
-  status?: 'going' | 'not_going' | 'maybe';
+  status?: "going" | "not_going" | "maybe";
 }
 
 export interface RSVPUpdate {
-  status: 'going' | 'not_going' | 'maybe';
+  status: "going" | "not_going" | "maybe";
 }
 
 export interface RSVP extends RSVPBase {

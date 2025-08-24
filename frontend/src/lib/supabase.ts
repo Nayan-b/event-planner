@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type Session, type AuthChangeEvent } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -13,7 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Helper function to handle auth state changes
 export const onAuthStateChange = (
-  callback: (event: string, session: any) => void
+  callback: (event: AuthChangeEvent, session: Session | null) => void | Promise<void>
 ) => {
   return supabase.auth.onAuthStateChange(callback);
 };
@@ -39,7 +39,7 @@ export const signIn = async (email: string, password: string) => {
 export const signUp = async (
   email: string,
   password: string,
-  userData: any
+  userData: { full_name: string }
 ) => {
   const { data, error } = await supabase.auth.signUp({
     email,

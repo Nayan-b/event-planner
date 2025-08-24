@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+// useRouter is not used in this component
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,10 +32,11 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     setIsLoading(true);
     try {
       await onSubmit(email, password);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sign in';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to sign in',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

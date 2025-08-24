@@ -94,11 +94,12 @@ export function EventForm({
           : "Event created successfully",
       });
       router.push(initialData ? `/events/${initialData.id}` : "/events");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save event';
       toast({
-        title: "Error",
-        description: error.message || "Failed to save event",
-        variant: "destructive",
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
       });
     }
   };

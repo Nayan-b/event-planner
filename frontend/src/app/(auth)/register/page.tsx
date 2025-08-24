@@ -15,8 +15,9 @@ export default function RegisterPage() {
       // User will be automatically redirected after email confirmation
       // or you can redirect to a verification page
       router.push('/verify-email');
-    } catch (error: any) {
-      throw new Error(error.message || 'Failed to create account');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account';
+      throw new Error(errorMessage);
     }
   };
 

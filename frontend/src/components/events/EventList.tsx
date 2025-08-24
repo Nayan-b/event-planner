@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Event } from '@/types/events';
 import { EventCard } from './EventCard';
-import { Button } from '@/components/ui/button';
+// Button is not used in this file
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
+// Skeleton is now implemented inline
 
 export interface EventListProps {
   events: Event[];
@@ -24,9 +24,9 @@ export function EventList({
 }: EventListProps) {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const now = new Date();
 
   useEffect(() => {
+    const now = new Date();
     if (!events) return;
     
     const filtered = events.filter(event => {
@@ -58,7 +58,7 @@ export function EventList({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-64 rounded-lg" />
+          <div key={i} style={{ height: '16rem', width: '100%', borderRadius: '0.5rem', border: '1px solid #ddd', backgroundColor: '#f7f7f7' }} />
         ))}
       </div>
     );
@@ -139,7 +139,7 @@ function EventGrid({ events, onRSVP, isOwner }: EventGridProps) {
         <EventCard
           key={event.id}
           event={event}
-          onRSVP={onRSVP ? (status) => onRSVP(event.id, status) : undefined}
+          onRSVP={onRSVP && event.id ? (status) => onRSVP(event.id, status) : undefined}
           isOwner={isOwner ? isOwner(event) : false}
         />
       ))}
@@ -147,20 +147,3 @@ function EventGrid({ events, onRSVP, isOwner }: EventGridProps) {
   );
 }
 
-// Skeleton component for loading state
-function Skeleton({ className }: { className?: string }) {
-  return (
-    <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)}>
-      <div className="p-6 space-y-4">
-        <div className="h-6 w-3/4 bg-muted rounded"></div>
-        <div className="h-4 w-1/2 bg-muted rounded"></div>
-        <div className="h-4 w-2/3 bg-muted rounded"></div>
-        <div className="h-4 w-1/4 bg-muted rounded"></div>
-      </div>
-    </div>
-  );
-}
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
-}

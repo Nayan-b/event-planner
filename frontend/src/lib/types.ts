@@ -47,8 +47,10 @@ export interface ApiResponse<T> {
 }
 
 // Type for creating a new event
-export interface CreateEventInput
-  extends Omit<Event, "id" | "created_at" | "updated_at" | "user" | "rsvps"> {}
+export type CreateEventInput = Pick<Event, 'title' | 'description' | 'location' | 'start_time' | 'end_time' | 'is_public'> & {
+  image_url?: string;
+  capacity?: number;
+};
 
 // Type for updating an event
 export interface UpdateEventInput extends Partial<CreateEventInput> {
@@ -56,9 +58,9 @@ export interface UpdateEventInput extends Partial<CreateEventInput> {
 }
 
 // Type for RSVP status update
-export type RSVPStatus = "going" | "maybe" | "not_going";
+export type RSVPStatus = 'going' | 'maybe' | 'not_going';
 
 export interface UpdateRSVPInput {
   eventId: string;
-  status: RSVPStatus;
+  status: 'going' | 'maybe' | 'not_going';
 }

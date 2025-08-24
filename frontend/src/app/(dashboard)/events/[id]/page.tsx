@@ -93,7 +93,7 @@ export default function EventDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [id, toast, isAuthenticated]);
+  }, [id, toast, isAuthenticated, router]);
 
   const handleRsvp = async (status: 'going' | 'not_going' | 'maybe') => {
     if (!event) return;
