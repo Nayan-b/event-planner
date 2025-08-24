@@ -1,30 +1,41 @@
-import { format } from 'date-fns';
-import { Calendar, MapPin, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Event } from '@/types/events';
-import Link from 'next/link';
+import { format } from "date-fns";
+import { Calendar, MapPin, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Event } from "@/types/events";
+import Link from "next/link";
 
 interface EventCardProps {
   event: Event;
   showActions?: boolean;
-  onRSVP?: (status: 'going' | 'not_going' | 'maybe') => void;
+  onRSVP?: (status: "going" | "not_going" | "maybe") => void;
   isOwner?: boolean;
 }
 
-export function EventCard({ event, showActions = true, onRSVP, isOwner = false }: EventCardProps) {
+export function EventCard({
+  event,
+  showActions = true,
+  onRSVP,
+  isOwner = false,
+}: EventCardProps) {
   const startDate = new Date(event.start_time);
   const endDate = new Date(event.end_time);
   const isPast = new Date() > endDate;
 
   const getRSVPStatus = () => {
     if (!event.user_rsvp) return null;
-    
+
     const statusMap = {
-      going: 'Going',
-      not_going: 'Not Going',
-      maybe: 'Maybe',
+      going: "Going",
+      not_going: "Not Going",
+      maybe: "Maybe",
     };
 
     return (
@@ -58,13 +69,16 @@ export function EventCard({ event, showActions = true, onRSVP, isOwner = false }
         )}
       </CardHeader>
       <CardContent className="flex-1">
-        <p className="text-muted-foreground mb-4 line-clamp-3">{event.description}</p>
-        
+        <p className="text-muted-foreground mb-4 line-clamp-3">
+          {event.description}
+        </p>
+
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-4 w-4" />
             <span>
-              {format(startDate, 'MMM d, yyyy h:mm a')} - {format(endDate, 'h:mm a')}
+              {format(startDate, "MMM d, yyyy h:mm a")} -{" "}
+              {format(endDate, "h:mm a")}
             </span>
           </div>
           {event.location && (
@@ -82,41 +96,49 @@ export function EventCard({ event, showActions = true, onRSVP, isOwner = false }
             </div>
           )}
         </div>
-        
+
         {getRSVPStatus()}
       </CardContent>
       {showActions && (
-        <CardFooter className="flex justify-between gap-2">
+        <CardFooter className="flex justify-between gap-2 w-full">
           <Button asChild variant="outline" size="sm">
             <Link href={`/events/${event.id}`}>View Details</Link>
           </Button>
-          
+
           {!isOwner && !isPast && onRSVP && (
             <div className="flex gap-2">
-              <Button 
-                variant={event.user_rsvp?.status === 'not_going' ? 'default' : 'outline'} 
+              <Button
+                variant={
+                  event.user_rsvp?.status === "not_going"
+                    ? "default"
+                    : "outline"
+                }
                 size="sm"
-                onClick={() => onRSVP('not_going')}
+                onClick={() => onRSVP("not_going")}
               >
                 Can't Go
               </Button>
-              <Button 
-                variant={event.user_rsvp?.status === 'maybe' ? 'default' : 'outline'} 
+              <Button
+                variant={
+                  event.user_rsvp?.status === "maybe" ? "default" : "outline"
+                }
                 size="sm"
-                onClick={() => onRSVP('maybe')}
+                onClick={() => onRSVP("maybe")}
               >
                 Maybe
               </Button>
-              <Button 
-                variant={event.user_rsvp?.status === 'going' ? 'default' : 'outline'} 
+              <Button
+                variant={
+                  event.user_rsvp?.status === "going" ? "default" : "outline"
+                }
                 size="sm"
-                onClick={() => onRSVP('going')}
+                onClick={() => onRSVP("going")}
               >
                 Going
               </Button>
             </div>
           )}
-          
+
           {isOwner && (
             <Button asChild variant="outline" size="sm">
               <Link href={`/events/${event.id}/edit`}>Edit Event</Link>

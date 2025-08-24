@@ -9,55 +9,95 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { eventService } from "@/lib/api/services/eventService";
 import { Event } from "@/lib/types";
-import { Loader2, MapPin, CalendarIcon, Clock, Users, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, AlertCircle, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function EventDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check authentication on component mount
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    if (!token) {
+      const returnTo = window.location.pathname;
+      router.push(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+    } else {
+      setIsAuthenticated(true);
+    }
+  }, [router]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchEventAndRsvp = async () => {
+      if (!id || !isAuthenticated) return;
+      
       try {
         setLoading(true);
         setError(null);
         
         // Fetch event details
-        const { data: eventData, error: eventError } = await eventService.getEvent(id as string);
-        if (eventError) throw new Error(eventError);
+        const eventResponse = await eventService.getEvent(id as string);
         
-        if (eventData) {
-          setEvent(eventData);
-          
-          // Fetch user's RSVP status
-          const { data: rsvpData } = await eventService.getUserRsvp(id as string);
-          if (rsvpData?.status) {
-            setRsvpStatus(rsvpData.status);
+        if (isMounted) {
+          if (eventResponse.data) {
+            setEvent(eventResponse.data);
+            
+            // Only fetch RSVP status if we have an event
+            const rsvpResponse = await eventService.getUserRsvp(id as string);
+            if (rsvpResponse.data) {
+              setRsvpStatus(rsvpResponse.data.status);
+            }
+          } else if (eventResponse.error) {
+            if (eventResponse.error === 'Unauthorized' || eventResponse.error.includes('401')) {
+              // Clear token and redirect to login
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth_token');
+              }
+              router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`);
+              return;
+            }
+            setError(eventResponse.error);
           }
         }
-      } catch (err) {
-        console.error("Error fetching event:", err);
-        setError("Failed to load event details. Please try again later.");
-        toast({
-          title: "Error",
-          description: "Failed to load event details. Please try again later.",
-          variant: "destructive",
-        });
+      } catch (error) {
+        console.error('Error fetching event:', error);
+        if (isMounted) {
+          setError('Failed to load event details. Please try again.');
+          toast({
+            title: "Error",
+            description: "Failed to load event details. Please try again later.",
+            variant: "destructive",
+          });
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchEventAndRsvp();
-  }, [id, toast]);
+    if (isAuthenticated) {
+      fetchEventAndRsvp();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [id, toast, isAuthenticated]);
 
   const handleRsvp = async (status: 'going' | 'not_going' | 'maybe') => {
+    if (!event) return;
+    
     try {
       setIsSubmitting(true);
       const { error } = await eventService.rsvpToEvent(id as string, status);
@@ -67,20 +107,13 @@ export default function EventDetailPage() {
       setRsvpStatus(status);
       toast({
         title: "Success",
-        description: `You've successfully ${status === 'going' ? 'RSVP\'d' : 'updated your RSVP'} for this event!`,
+        description: `You&apos;ve successfully ${status === 'going' ? 'RSVP&apos;d' : 'updated your RSVP'} for this event!`,
       });
       
-      // Update the event's registered count
-      if (event) {
-        setEvent({
-          ...event,
-          registered: status === 'going' 
-            ? event.registered + 1 
-            : rsvpStatus === 'going' 
-              ? Math.max(0, event.registered - 1) 
-              : event.registered
-        });
-      }
+      // Update the event's attendee count if needed
+      // Note: This is a client-side optimistic update
+      // The actual count should be refreshed from the server on the next load
+      
     } catch (err) {
       console.error("Error updating RSVP:", err);
       toast({
@@ -126,7 +159,7 @@ export default function EventDetailPage() {
   const isRegistered = rsvpStatus === 'going';
   const isMaybe = rsvpStatus === 'maybe';
   const isNotGoing = rsvpStatus === 'not_going';
-  const isFull = event.registered >= event.capacity;
+  const isFull = event.capacity ? (event.rsvps?.filter(r => r.status === 'going').length || 0) >= event.capacity : false;
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -143,9 +176,15 @@ export default function EventDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary" className="text-sm">
-                {event.category}
-              </Badge>
+              {event.is_public ? (
+                <Badge variant="secondary" className="text-sm">
+                  Public
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-sm">
+                  Private
+                </Badge>
+              )}
               {isFull && (
                 <Badge variant="destructive" className="text-sm">
                   Full
@@ -162,13 +201,17 @@ export default function EventDetailPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
-                <CalendarIcon className="h-5 w-5 mt-0.5 text-muted-foreground" />
+                <Calendar className="h-5 w-5 mt-0.5 text-muted-foreground" />
                 <div>
                   <p className="font-medium">Date & Time</p>
                   <p className="text-sm text-muted-foreground">
-                    {format(parseISO(event.date), "EEEE, MMMM d, yyyy")}
-                    {event.time && ` • ${event.time}`}
+                    {format(parseISO(event.start_time), "EEEE, MMMM d, yyyy 'at' h:mm a")}
                   </p>
+                  {event.end_time && (
+                    <p className="text-sm text-muted-foreground">
+                      to {format(parseISO(event.end_time), "EEEE, MMMM d, yyyy 'at' h:mm a")}
+                    </p>
+                  )}
                 </div>
               </div>
               
@@ -182,23 +225,25 @@ export default function EventDetailPage() {
                 </div>
               )}
               
-              <div className="flex items-start gap-4">
-                <Users className="h-5 w-5 mt-0.5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Capacity</p>
-                  <p className="text-sm text-muted-foreground">
-                    {event.registered} of {event.capacity} spots filled
-                  </p>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
-                    <div 
-                      className="bg-primary h-2.5 rounded-full" 
-                      style={{ 
-                        width: `${Math.min(100, (event.registered / event.capacity) * 100)}%` 
-                      }}
-                    />
+              {event.capacity && (
+                <div className="flex items-start gap-4">
+                  <Users className="h-5 w-5 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Capacity</p>
+                    <p className="text-sm text-muted-foreground">
+                      {event.rsvps?.filter(r => r.status === 'going').length || 0} of {event.capacity} spots filled
+                    </p>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                      <div 
+                        className="bg-primary h-2.5 rounded-full" 
+                        style={{ 
+                          width: `${Math.min(100, ((event.rsvps?.filter(r => r.status === 'going').length || 0) / event.capacity) * 100)}%` 
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -209,6 +254,40 @@ export default function EventDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-line">{event.description}</p>
+              </CardContent>
+            </Card>
+          )}
+          {event.user && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Event Host</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                    {event.user.avatar_url ? (
+                      <div className="relative h-full w-full">
+                        <Image 
+                          src={event.user.avatar_url} 
+                          alt={event.user.full_name || 'Host'} 
+                          fill
+                          className="rounded-full object-cover"
+                          sizes="48px"
+                        />
+                      </div>
+                    ) : (
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium">
+                      {event.user.full_name || 'Event Host'}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Created on {format(parseISO(event.created_at), 'MMMM d, yyyy')}
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -264,7 +343,7 @@ export default function EventDetailPage() {
               
               {isFull && !isRegistered && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  You'll be added to the waitlist if you RSVP.
+                  You&apos;ll be added to the waitlist if you RSVP.
                 </p>
               )}
             </CardContent>

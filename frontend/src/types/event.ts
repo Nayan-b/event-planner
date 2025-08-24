@@ -1,24 +1,32 @@
-export interface Event {
+export interface BaseEvent {
   id: string;
   title: string;
   description: string;
-  date: string;
-  time: string;
   location: string;
+  start_time: string;
+  end_time: string;
+  is_public: boolean;
   category: string;
-  capacity: number;
-  registered: number;
-  image?: string;
-  created_at?: string;
-  updated_at?: string;
-  user_id?: string;
-  start_time?: string;
-  end_time?: string;
-  price?: number;
-  is_public?: boolean;
+  max_attendees?: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  image_url?: string;
 }
 
-export interface EventFormData extends Omit<Event, 'id' | 'created_at' | 'updated_at'> {}
+export interface Event extends BaseEvent {
+  creator: User | null;
+  attendees_count: number;
+  current_user_rsvp: RSVP | null;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url?: string;
+}
+
 
 export interface RSVP {
   id: string;

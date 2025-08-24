@@ -1,11 +1,32 @@
 import { Event } from "@/lib/types";
 
 export interface ApiResponse<T> {
-  data?: T;
+  data?: T | null;
   error?: string;
+  status?: number;
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
+// Get auth token from localStorage
+const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token');
+};
+
+// Get headers with auth token
+const getAuthHeaders = (): HeadersInit => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+};
 
 async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
   if (!response.ok) {
@@ -23,9 +44,7 @@ export const eventService = {
   async getEvents(): Promise<ApiResponse<Event[]>> {
     try {
       const response = await fetch(`${API_BASE_URL}/events`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
       });
       return handleResponse<Event[]>(response);
@@ -38,9 +57,7 @@ export const eventService = {
   async getEvent(id: string): Promise<ApiResponse<Event>> {
     try {
       const response = await fetch(`${API_BASE_URL}/events/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
       });
       return handleResponse<Event>(response);
@@ -56,9 +73,7 @@ export const eventService = {
     try {
       const response = await fetch(`${API_BASE_URL}/events`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify(eventData),
       });
@@ -76,9 +91,7 @@ export const eventService = {
     try {
       const response = await fetch(`${API_BASE_URL}/events/${id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify(eventData),
       });
@@ -93,6 +106,7 @@ export const eventService = {
     try {
       const response = await fetch(`${API_BASE_URL}/events/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
         credentials: "include",
       });
       if (!response.ok) {
@@ -109,31 +123,75 @@ export const eventService = {
   async rsvpToEvent(
     eventId: string,
     status: "going" | "not_going" | "maybe"
-  ): Promise<ApiResponse<void>> {
+  ): Promise<ApiResponse<{ rsvpId: string; status: string }>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/rsvps`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ event_id: eventId, status }),
-      });
-      return handleResponse<void>(response);
+      const response = await fetch(
+        `${API_BASE_URL}/events/${eventId}/rsvp`,
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          credentials: "include",
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { 
+          error: errorData.message || "Failed to update RSVP status",
+          status: response.status 
+        };
+      }
+
+      return handleResponse<{ rsvpId: string; status: string }>(response);
     } catch (error) {
-      return { error: "Failed to update RSVP status." };
+      console.error('RSVP Error:', error);
+      return { 
+        error: error instanceof Error ? error.message : "Failed to update RSVP status" 
+      };
     }
   },
 
   // Get user's RSVP status for an event
-  async getUserRsvp(eventId: string): Promise<ApiResponse<{ status: string }>> {
+  async getUserRsvp(eventId: string): Promise<ApiResponse<{ 
+    id: string;
+    status: string;
+    event_id: string;
+    user_id: string;
+    created_at: string;
+    updated_at: string;
+  }>> {
     try {
       const response = await fetch(`${API_BASE_URL}/rsvps/event/${eventId}`, {
+        headers: getAuthHeaders(),
         credentials: "include",
       });
-      return handleResponse<{ status: string }>(response);
+
+      if (response.status === 404) {
+        return { data: null, status: 404 };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { 
+          error: errorData.message || "Failed to fetch RSVP status",
+          status: response.status 
+        };
+      }
+
+      return handleResponse<{
+        id: string;
+        status: string;
+        event_id: string;
+        user_id: string;
+        created_at: string;
+        updated_at: string;
+      }>(response);
     } catch (error) {
-      return { error: "Failed to fetch RSVP status." };
+      console.error('Get RSVP Error:', error);
+      return { 
+        error: error instanceof Error ? error.message : "Failed to fetch RSVP status"
+      };
     }
   },
 };

@@ -24,7 +24,7 @@ import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { eventService } from "@/lib/api/services/eventService";
-import { Event } from "@/types/event";
+import { Event } from "@/lib/types";
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -38,11 +38,11 @@ export default function EventsPage() {
         setLoading(true);
         setError(null);
         const { data, error: fetchError } = await eventService.getEvents();
-        
+
         if (fetchError) {
           throw new Error(fetchError);
         }
-        
+
         if (data) {
           setEvents(data);
         }
@@ -124,9 +124,9 @@ export default function EventsPage() {
               className="flex flex-col h-full hover:shadow-lg transition-shadow"
             >
               <div className="h-48 bg-gray-200 rounded-t-lg overflow-hidden">
-                {event.image ? (
+                {event.image_url ? (
                   <img
-                    src={event.image}
+                    src={event.image_url}
                     alt={event.title}
                     className="w-full h-full object-cover"
                   />
@@ -139,45 +139,51 @@ export default function EventsPage() {
                 )}
               </div>
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl">{event.title}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {event.description}
-                    </CardDescription>
-                  </div>
-                  <Badge variant="secondary" className="whitespace-nowrap">
-                    {event.category}
-                  </Badge>
+                <div className="space-y-1">
+                  <CardTitle className="text-xl">{event.title}</CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {event.description}
+                  </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1">
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    <span>{format(parseISO(event.date), "MMMM d, yyyy")}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-2 h-4 w-4" />
-                    <span>{event.time}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{event.location}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
+              <CardContent className="flex-1 space-y-3">
+                <div className="flex items-center text-sm">
+                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {format(parseISO(event.start_time), "MMMM d, yyyy")}
+                  </span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {format(parseISO(event.start_time), "h:mm a")} -{" "}
+                    {format(parseISO(event.end_time), "h:mm a")}
+                  </span>
+                </div>
+                <div className="flex items-start text-sm">
+                  <MapPin className="mr-2 h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <span className="line-clamp-2">{event.location}</span>
+                </div>
+                <div className="flex items-center justify-between pt-2 text-sm">
+                  <div className="flex items-center text-muted-foreground">
                     <Users className="mr-2 h-4 w-4" />
                     <span>
-                      {event.registered}/{event.capacity} registered
+                      {event.rsvps?.length || 0} attending •{" "}
+                      {event.capacity ? `${event.capacity} max` : "No limit"}
                     </span>
                   </div>
+                  {event.rsvps?.some((rsvp) => rsvp.status) && (
+                    <Badge variant="secondary" className="capitalize">
+                      {event.rsvps[0].status.replace("_", " ")}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" asChild className="w-full">
+              <CardFooter className="flex justify-between w-max gap-4">
+                <Button variant="outline" asChild className="w-full flex-1">
                   <Link href={`/events/${event.id}`}>View Details</Link>
                 </Button>
-                <Button asChild className="w-full">
+                <Button asChild className="w-full flex-1">
                   <Link href={`/events/${event.id}/register`}>Register</Link>
                 </Button>
               </CardFooter>

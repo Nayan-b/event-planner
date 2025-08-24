@@ -93,7 +93,7 @@ export function EventForm({
           ? "Event updated successfully"
           : "Event created successfully",
       });
-      router.push(initialData ? `/events/${initialData.id}` : "/dashboard");
+      router.push(initialData ? `/events/${initialData.id}` : "/events");
     } catch (error: any) {
       toast({
         title: "Error",

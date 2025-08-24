@@ -34,8 +34,6 @@ Before deploying, make sure you have:
 4. **Set Environment Variables**
    Add these environment variables in the Vercel dashboard:
    ```
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
    NEXT_PUBLIC_API_URL=https://your-backend-api-url.com/api/v1
    ```
 

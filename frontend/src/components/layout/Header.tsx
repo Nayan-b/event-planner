@@ -43,7 +43,7 @@ export function Header({ user }: HeaderProps) {
   };
 
   const navLinks = [
-    { href: "/dashboard", label: "Events", icon: <Home className="h-5 w-5" /> },
+    { href: "/events", label: "Events", icon: <Home className="h-5 w-5" /> },
     {
       href: "/events/new",
       label: "Create Event",

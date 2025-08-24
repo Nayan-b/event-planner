@@ -1,17 +1,64 @@
+"use client";
+
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { EventForm } from "@/components/events/EventForm";
 import { eventService } from "@/lib/api/services/eventService";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { EventCreate } from "@/types/events";
 
 export default function NewEventPage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSubmit = async (data: any) => {
-    try {
-      const { error } = await eventService.createEvent(data);
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
-      if (error) throw new Error(error);
+  // Show loading state while checking auth
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const handleSubmit = async (formData: EventCreate | EventUpdate) => {
+    try {
+      // Ensure required fields are present
+      if (!formData.title || !formData.description || !formData.location || !formData.start_time || !formData.end_time) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Prepare event data in the format expected by the API
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        start_time: formData.start_time instanceof Date 
+          ? formData.start_time.toISOString() 
+          : formData.start_time,
+        end_time: formData.end_time instanceof Date 
+          ? formData.end_time.toISOString() 
+          : formData.end_time,
+        is_public: formData.is_public ?? true,
+        max_attendees: formData.max_attendees,
+        image_url: formData.image_url,
+        created_by: user.id,
+      };
+      
+      const response = await eventService.createEvent({
+        ...eventData,
+        created_by: user.id,
+      });
+
+      if (response.error) throw new Error(response.error);
 
       toast({
         title: "Success!",
@@ -19,7 +66,7 @@ export default function NewEventPage() {
       });
 
       router.push("/events");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description:
